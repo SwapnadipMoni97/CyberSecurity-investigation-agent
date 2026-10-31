@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secops-investigation-agent"
+version = "0.1.0"
+description = "A read-only, evidence-grounded security investigation copilot"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "langgraph>=0.2,<2",
+  "openai>=1.60,<3",
+  "python-dotenv>=1,<2",
+  "pydantic>=2.8,<3",
+]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

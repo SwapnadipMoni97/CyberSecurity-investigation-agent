@@ -1,0 +1,93 @@
+[
+  {
+    "event_id": "OKTA-2026-1042",
+    "source": "okta",
+    "timestamp": "2026-10-30T09:12:00Z",
+    "event_type": "user.session.start",
+    "actor": "alex.chen@example.test",
+    "action": "login",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "Okta workforce tenant",
+    "details": {"mfa": "passed", "device": "unrecognized Windows device", "geo": "New location"},
+    "raw": {"vendor_event": "user.session.start", "debug_data": {"risk": "medium"}}
+  },
+  {
+    "event_id": "GHE-2026-8831",
+    "source": "github",
+    "timestamp": "2026-10-30T09:19:00Z",
+    "event_type": "personal_access_token.create",
+    "actor": "alex.chen@example.test",
+    "action": "created classic personal access token",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "acme/payments-api",
+    "details": {"token_name": "build-helper", "scopes": ["repo", "workflow"]},
+    "raw": {"audit_log": "personal_access_token.create", "token_value": "[redacted]"}
+  },
+  {
+    "event_id": "GHE-2026-8838",
+    "source": "github",
+    "timestamp": "2026-10-30T09:26:00Z",
+    "event_type": "repo.download_zip",
+    "actor": "alex.chen@example.test",
+    "action": "cloned repository",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "acme/payments-api",
+    "details": {"repository_size_mb": 412, "branch": "main"},
+    "raw": {"audit_log": "repo.download_zip"}
+  },
+  {
+    "event_id": "AWS-2026-5510",
+    "source": "aws",
+    "timestamp": "2026-10-30T09:41:00Z",
+    "event_type": "AssumeRole",
+    "actor": "alex.chen@example.test",
+    "action": "assumed role",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "arn:aws:iam::111122223333:role/DeveloperRole",
+    "details": {"user_agent": "aws-cli/2.17", "session_name": "alex.chen"},
+    "raw": {"event_source": "sts.amazonaws.com", "event_name": "AssumeRole"}
+  },
+  {
+    "event_id": "AWS-2026-5517",
+    "source": "aws",
+    "timestamp": "2026-10-30T09:46:00Z",
+    "event_type": "AttachUserPolicy",
+    "actor": "alex.chen@example.test",
+    "action": "attached AdministratorAccess policy",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "arn:aws:iam::111122223333:user/build-service",
+    "details": {"policy": "AdministratorAccess", "alert_id": "ALT-1001"},
+    "raw": {"event_source": "iam.amazonaws.com", "event_name": "AttachUserPolicy"}
+  },
+  {
+    "event_id": "AWS-2026-5522",
+    "source": "aws",
+    "timestamp": "2026-10-30T09:50:00Z",
+    "event_type": "GetSecretValue",
+    "actor": "alex.chen@example.test",
+    "action": "read secret value",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "arn:aws:secretsmanager:us-east-1:111122223333:secret:payments-prod",
+    "details": {"alert_id": "ALT-1001"},
+    "raw": {"event_source": "secretsmanager.amazonaws.com", "event_name": "GetSecretValue", "secret_value": "[not logged]"}
+  },
+  {
+    "event_id": "OKTA-2026-1077",
+    "source": "okta",
+    "timestamp": "2026-10-30T10:05:00Z",
+    "event_type": "user.session.end",
+    "actor": "alex.chen@example.test",
+    "action": "session ended",
+    "outcome": "success",
+    "ip_address": "198.51.100.24",
+    "resource": "Okta workforce tenant",
+    "details": {"reason": "user sign-out"},
+    "raw": {"vendor_event": "user.session.end"}
+  }
+]

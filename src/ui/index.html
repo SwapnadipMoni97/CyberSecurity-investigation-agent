@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SecOps Investigation Copilot</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1117; --panel:#151b23; --line:#2b3542; --text:#e6edf3; --muted:#9ba8b7; --accent:#65c4a3; --warn:#f0ba70; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:15px/1.55 system-ui,Segoe UI,sans-serif; background:var(--bg); color:var(--text); }
+    main { max-width:1100px; margin:36px auto; padding:0 20px 60px; }
+    header { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:25px; }
+    h1 { font-size:27px; margin:0 0 4px; } h2 { margin:0 0 15px; font-size:18px; }
+    p { margin:5px 0 0; color:var(--muted); }
+    .pill { color:var(--accent); border:1px solid #326b5b; padding:4px 10px; border-radius:20px; font-size:12px; white-space:nowrap; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:18px; align-items:start; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:19px; margin-bottom:18px; }
+    label { display:block; font-size:13px; margin:12px 0 5px; color:var(--muted); }
+    textarea,input { width:100%; background:#0d1117; color:var(--text); border:1px solid var(--line); border-radius:7px; padding:10px; font:inherit; }
+    textarea { min-height:112px; resize:vertical; }
+    button { border:0; border-radius:7px; padding:10px 14px; background:var(--accent); color:#092119; font-weight:700; cursor:pointer; margin-top:12px; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .secondary { background:#263242; color:var(--text); }
+    .sources { display:flex; gap:7px; flex-wrap:wrap; margin-top:12px; }
+    .source { font-size:12px; color:#c2cfdd; border:1px solid var(--line); padding:3px 8px; border-radius:15px; }
+    .muted { color:var(--muted); }
+    .finding { border-top:1px solid var(--line); padding:13px 0; }
+    .finding:first-child { border-top:0; padding-top:0; }
+    .finding h3 { font-size:15px; margin:0 0 4px; }
+    .severity { font-size:11px; text-transform:uppercase; color:var(--warn); margin-left:7px; }
+    code { color:#9bd4ff; font-size:12px; }
+    .timeline { border-left:1px solid #496070; margin:10px 0 0 6px; padding-left:16px; }
+    .event { position:relative; padding:0 0 15px; }
+    .event::before { content:""; position:absolute; left:-21px; top:7px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+    .event small { display:block; color:var(--muted); }
+    .status { min-height:22px; color:var(--warn); font-size:13px; }
+    @media(max-width:760px) { .grid { grid-template-columns:1fr; } header { display:block; } .pill { display:inline-block; margin-top:10px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><h1>SecOps Investigation Copilot</h1><p>Cross-source triage with evidence-linked findings.</p></div><span class="pill" id="mode">Loading mode…</span></header>
+  <div class="grid">
+    <aside>
+      <section class="card"><h2>Start an investigation</h2>
+        <form id="form">
+          <label for="question">Investigation question</label><textarea id="question" required>Investigate the suspicious privilege escalation and related activity</textarea>
+          <label for="alert">Alert ID (optional)</label><input id="alert" value="ALT-1001" placeholder="e.g. ALT-1001">
+          <label for="hours">Time window (hours)</label><input id="hours" type="number" min="1" max="720" value="72">
+          <button id="submit">Investigate sample incident</button><div class="status" id="status" role="status"></div>
+        </form>
+      </section>
+      <section class="card"><h2>Available evidence</h2><div class="muted" id="event-count">Loading events…</div><div class="sources" id="sources"></div><button class="secondary" id="refresh" type="button">Refresh event inventory</button></section>
+      <section class="card"><h2>Recent cases</h2><div id="cases" class="muted">No saved investigations yet.</div></section>
+    </aside>
+    <section>
+      <div class="card"><h2>What happened</h2><p id="summary" class="muted">Run an investigation to see the analyst summary.</p></div>
+      <div class="card"><h2>Key findings</h2><div id="findings" class="muted">Findings will appear here with supporting event IDs.</div></div>
+      <div class="card"><h2>Timeline</h2><div id="timeline" class="muted">The evidence timeline will appear here.</div></div>
+      <div class="card"><h2>Scope, gaps, and next steps</h2><div id="scope" class="muted">No investigation loaded.</div></div>
+    </section>
+  </div>
+</main>
+<script>
+const el = id => document.getElementById(id);
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+async function refreshInventory() {
+  const [events, cases, health] = await Promise.all([fetch('/api/events').then(r => r.json()), fetch('/api/investigations').then(r => r.json()), fetch('/api/health').then(r => r.json())]);
+  const sources = [...new Set(events.map(e => e.source))].sort();
+  el('event-count').textContent = `${events.length} events loaded`;
+  el('sources').innerHTML = sources.map(s => `<span class="source">${esc(s)}</span>`).join('');
+  el('mode').textContent = health.model_mode === 'hosted' ? 'Hosted model enabled' : 'Local deterministic mode';
+  el('cases').innerHTML = cases.length ? cases.map(c => `<div class="finding"><strong>${esc(c.alert_id || 'Analyst inquiry')}</strong><small>${esc(c.created_at)}</small></div>`).join('') : 'No saved investigations yet.';
+}
+function showReport(report) {
+  el('summary').textContent = report.summary;
+  el('findings').innerHTML = report.key_findings.map(f => `<div class="finding"><h3>${esc(f.title)}<span class="severity">${esc(f.severity)}</span></h3><div>${esc(f.detail)}</div><small>Evidence: ${f.evidence_ids.map(id => `<code>${esc(id)}</code>`).join(', ')}</small></div>`).join('');
+  el('timeline').innerHTML = report.timeline.length ? `<div class="timeline">${report.timeline.map(e => `<div class="event"><strong>${esc(e.event)} — ${esc(e.action || '')}</strong><small>${esc(e.timestamp)} · ${esc(e.source)} · ${esc(e.actor || 'unknown actor')} · <code>${esc(e.event_id)}</code></small><span>${esc(e.resource || '')}</span><details><summary>Event details</summary><pre>${esc(JSON.stringify(e.details, null, 2))}</pre></details></div>`).join('')}</div>` : 'No matching events.';
+  const scope = report.scope;
+  el('scope').innerHTML = `<p><strong>Actors:</strong> ${esc(scope.actors.join(', ') || 'None identified')}</p><p><strong>Sources:</strong> ${esc(scope.sources.join(', ') || 'None')}</p><p><strong>Events reviewed:</strong> ${esc(scope.events_reviewed)}</p><p><strong>Gaps:</strong> ${esc(report.gaps.join(' '))}</p><p><strong>Suggested follow-up:</strong> ${esc(report.recommended_next_steps.join(' '))}</p><p class="muted">Report mode: ${esc(report.model_mode)}</p>`;
+}
+el('form').addEventListener('submit', async event => {
+  event.preventDefault(); const button = el('submit'); button.disabled = true; el('status').textContent = 'Gathering evidence and building the report…';
+  try {
+    const response = await fetch('/api/investigations', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:el('question').value, alert_id:el('alert').value || null, time_window_hours:Number(el('hours').value)})});
+    const result = await response.json(); if (!response.ok) throw new Error(result.detail || 'Investigation failed');
+    showReport(result); el('status').textContent = `Saved case ${result.investigation_id}`; await refreshInventory();
+  } catch (error) { el('status').textContent = error.message; }
+  finally { button.disabled = false; }
+});
+el('refresh').addEventListener('click', refreshInventory);
+refreshInventory().catch(error => { el('status').textContent = `Could not load application data: ${error.message}`; });
+</script>
+</body>
+</html>
